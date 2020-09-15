@@ -114,6 +114,7 @@ class Window(QtWidgets.QWidget, Callbacks):
 
     def split_path(self, s):
         path = s.split("/")
+        path = list(filter(None, path))
         res = []
         if len(path) > 0:
             aggr = path[0]
@@ -179,7 +180,12 @@ class Window(QtWidgets.QWidget, Callbacks):
 
                 # add variable
                 (parent, name) = path[-1]
-                value = json.loads(v.value_as_json)
+                value = v.value_as_json
+                try:
+                    value = json.loads(v.value_as_json)
+                except Exception as e: 
+                    pass
+
                 if name not in self.state_map:
                     self.insert_variable(self.get_parent(parent), name, value)
                 else:
