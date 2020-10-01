@@ -23,18 +23,6 @@ find_package(ament_cmake REQUIRED)
 
 find_package(rosidl_default_generators REQUIRED)
 set(msg_files
-  "msg/State.msg"
-  "msg/ForcedGoal.msg"
-  "msg/VariableInfo.msg"
-  "msg/TransitionInfo.msg"
-  "msg/ResourceInfo.msg"
-  "msg/PlanningInfo.msg"
-  "msg/AbilityInfo.msg"
-  "msg/ModelInfo.msg"
-  "msg/RunnerInfo.msg"
-  "msg/RunnerCommand.msg"
-  "msg/NodeCmd.msg"
-  "msg/NodeMode.msg"
   "msg/RegisterResource.msg"
   "msg/Resources.msg"
 )
