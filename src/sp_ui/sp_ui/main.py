@@ -31,7 +31,7 @@ class Ros2Node(Node, Callbacks):
 
         self.subscriber = self.create_subscription(
             String,
-            "sp/state",
+            "sp/state_flat",
             self.sp_cmd_callback,
             10)
 
@@ -48,7 +48,7 @@ class Ros2Node(Node, Callbacks):
         self.state_publisher.publish(x)
 
     def sp_cmd_callback(self, data):
-        print("ui got data: " + str(data.data))
+        # print("ui got data: " + str(data.data))
         try:
             Callbacks.info = json.loads(data.data)
         except json.JSONDecodeError as error:
@@ -170,10 +170,7 @@ class Window(QtWidgets.QWidget, Callbacks):
 
     def update_state_variables(self):
         if self and self.init:
-            print(str(Callbacks.info))
             for p, v in Callbacks.info.items():
-                print("Callback info: " + str(p) + " " + str(p))
-                continue
                 path = self.split_path(p)
                 if len(path) == 0:
                     continue
@@ -207,7 +204,7 @@ class Window(QtWidgets.QWidget, Callbacks):
                         value_item.setData(value, Qt.DisplayRole)
                         value_item.setData(value, Qt.ToolTipRole)
 
-            #self.mode.setText(str(Callbacks.info["mode"]))
+            self.mode.setText(str(Callbacks.info["/mode"]))
 
             #self.count += 1
 
@@ -271,32 +268,31 @@ class Window(QtWidgets.QWidget, Callbacks):
         set_state_button = QtWidgets.QPushButton("set_state")
         def set_state_button_clicked():
             print("set_state")
-            set_it = []
-            # for path, index in self.state_map.items():
-            #     #set_index = index.siblingAtColumn(2)
-            #     set_index = index.sibling(index.row(), 2)
-            #     set_item = self.state_model.itemFromIndex(set_index)
-            #     if set_item:
-            #         set_value = set_item.data(Qt.EditRole)
-            #         if set_value == "true" or set_value == "t" or set_value == "T":
-            #             set_it.append(State(path = path, value_as_json = json.dumps(True)))
-            #         elif set_value == "false" or set_value == "f" or set_value == "F":
-            #             set_it.append(State(path = path, value_as_json = json.dumps(False)))
-            #         elif set_value:
-            #             try:
-            #                 val = ast.literal_eval(set_value)
-            #                 set_it.append(State(path = path, value_as_json = json.dumps(val)))
-            #             except ValueError:
-            #                 set_it.append(State(path = path, value_as_json = json.dumps(set_value)))
+            set_it = {}
+            for path, index in self.state_map.items():
+                #set_index = index.siblingAtColumn(2)
+                set_index = index.sibling(index.row(), 2)
+                set_item = self.state_model.itemFromIndex(set_index)
+                if set_item:
+                    set_value = set_item.data(Qt.EditRole)
+                    if set_value == "true" or set_value == "t" or set_value == "T":
+                        set_it[path]= True
+                    elif set_value == "false" or set_value == "f" or set_value == "F":
+                        set_it[path]= False
+                    elif set_value:
+                        try:
+                            val = ast.literal_eval(set_value)
+                            set_it[path]= json.dumps(val)
+                        except ValueError:
+                            set_it[path]= set_value
 
-            #         set_item.setData("", Qt.EditRole)
+                    set_item.setData("", Qt.EditRole)
 
-            # print("SET STATE:")
-            # print(set_it)
-            # if set_it:
-            #     Callbacks.cmd.state = set_it
-            #     Callbacks.cmd.set_state = True
-            #     Callbacks.trigger_node()
+            print("SET STATE:")
+            print(set_it)
+            if set_it:
+                Callbacks.cmd = set_it
+                Callbacks.trigger_node()
 
         set_state_button.clicked.connect(set_state_button_clicked)
         tree_l.addWidget(set_state_button, 1, 3)
