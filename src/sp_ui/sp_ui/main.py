@@ -10,12 +10,12 @@ from rclpy.node import Node
 from PyQt5 import (QtWidgets, QtCore, QtGui)
 from PyQt5.QtCore import (Qt)
 
-from sp_messages.msg import (RunnerCommand, RunnerInfo, State)
+from std_msgs.msg import String
 
 
 class Callbacks():
-    info = RunnerInfo()
-    cmd = RunnerCommand()
+    info = {}
+    cmd = {}
 
     trigger_node = None
     trigger_ui = None
@@ -30,24 +30,30 @@ class Ros2Node(Node, Callbacks):
         Callbacks.trigger_node = self.trigger
 
         self.subscriber = self.create_subscription(
-            RunnerInfo,
-            "sp/runner/info",
+            String,
+            "sp/state_flat",
             self.sp_cmd_callback,
             10)
 
         self.state_publisher = self.create_publisher(
-            RunnerCommand,
-            "sp/runner/command",
+            String,
+            "sp/set_state",
             10)
 
-        print('Up and running...')
+        self.get_logger().info("Sequence Planner UI, up and running")
 
     def trigger(self):
-        print("trigger node")
-        self.state_publisher.publish(Callbacks.cmd)
+        x = String()
+        x.data = json.dumps(Callbacks.cmd)
+        self.state_publisher.publish(x)
 
     def sp_cmd_callback(self, data):
-        Callbacks.info = data
+        # print("ui got data: " + str(data.data))
+        try:
+            Callbacks.info = json.loads(data.data)
+        except json.JSONDecodeError as error:
+            self.get_logger().error('error in sp_cmd_callback: "%s"' % error)
+        
         #self.get_logger().info('info: "%s"' % data)
         if Callbacks.trigger_ui:
             Callbacks.trigger_ui()
@@ -164,8 +170,8 @@ class Window(QtWidgets.QWidget, Callbacks):
 
     def update_state_variables(self):
         if self and self.init:
-            for v in Callbacks.info.state:
-                path = self.split_path(v.path)
+            for p, v in Callbacks.info.items():
+                path = self.split_path(p)
                 if len(path) == 0:
                     continue
 
@@ -180,7 +186,7 @@ class Window(QtWidgets.QWidget, Callbacks):
 
                 # add variable
                 (parent, name) = path[-1]
-                value = v.value_as_json
+                value = v
                 try:
                     value = json.loads(v.value_as_json)
                 except Exception as e: 
@@ -198,7 +204,7 @@ class Window(QtWidgets.QWidget, Callbacks):
                         value_item.setData(value, Qt.DisplayRole)
                         value_item.setData(value, Qt.ToolTipRole)
 
-            self.mode.setText(str(Callbacks.info.mode))
+            self.mode.setText(str(Callbacks.info["/mode"]))
 
             #self.count += 1
 
@@ -262,7 +268,7 @@ class Window(QtWidgets.QWidget, Callbacks):
         set_state_button = QtWidgets.QPushButton("set_state")
         def set_state_button_clicked():
             print("set_state")
-            set_it = []
+            set_it = {}
             for path, index in self.state_map.items():
                 #set_index = index.siblingAtColumn(2)
                 set_index = index.sibling(index.row(), 2)
@@ -270,23 +276,22 @@ class Window(QtWidgets.QWidget, Callbacks):
                 if set_item:
                     set_value = set_item.data(Qt.EditRole)
                     if set_value == "true" or set_value == "t" or set_value == "T":
-                        set_it.append(State(path = path, value_as_json = json.dumps(True)))
+                        set_it[path]= True
                     elif set_value == "false" or set_value == "f" or set_value == "F":
-                        set_it.append(State(path = path, value_as_json = json.dumps(False)))
+                        set_it[path]= False
                     elif set_value:
                         try:
                             val = ast.literal_eval(set_value)
-                            set_it.append(State(path = path, value_as_json = json.dumps(val)))
+                            set_it[path]= json.dumps(val)
                         except ValueError:
-                            set_it.append(State(path = path, value_as_json = json.dumps(set_value)))
+                            set_it[path]= set_value
 
                     set_item.setData("", Qt.EditRole)
 
             print("SET STATE:")
             print(set_it)
             if set_it:
-                Callbacks.cmd.state = set_it
-                Callbacks.cmd.set_state = True
+                Callbacks.cmd = set_it
                 Callbacks.trigger_node()
 
         set_state_button.clicked.connect(set_state_button_clicked)
