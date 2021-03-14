@@ -2,6 +2,7 @@ import sys
 import threading
 import json
 import ast
+import datetime
 # from itertools import *
 
 import rclpy
@@ -53,7 +54,7 @@ class Ros2Node(Node, Callbacks):
             Callbacks.info = json.loads(data.data)
         except json.JSONDecodeError as error:
             self.get_logger().error('error in sp_cmd_callback: "%s"' % error)
-        
+
         #self.get_logger().info('info: "%s"' % data)
         if Callbacks.trigger_ui:
             Callbacks.trigger_ui()
@@ -189,8 +190,14 @@ class Window(QtWidgets.QWidget, Callbacks):
                 value = v
                 try:
                     value = json.loads(v.value_as_json)
-                except Exception as e: 
+                except Exception as e:
                     pass
+
+                if isinstance(value, dict):
+                    secs = value.get("secs_since_epoch")
+                    nanos = value.get("nanos_since_epoch")
+                    if secs != None and nanos != None:
+                        value = str(datetime.datetime.fromtimestamp(secs + nanos / 10**9))
 
                 if name not in self.state_map:
                     self.insert_variable(self.get_parent(parent), name, value)
