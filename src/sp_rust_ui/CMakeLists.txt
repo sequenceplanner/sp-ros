@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(r2r_minimal_node)
+project(sp-rust-ui)
 
 find_package(ament_cmake REQUIRED)
 
