@@ -12,6 +12,7 @@ from PyQt5 import (QtWidgets, QtCore, QtGui)
 from PyQt5.QtCore import (Qt)
 
 from std_msgs.msg import String
+from sp_messages.srv import Json
 
 
 class Callbacks():
@@ -36,17 +37,17 @@ class Ros2Node(Node, Callbacks):
             self.sp_cmd_callback,
             10)
 
-        self.state_publisher = self.create_publisher(
-            String,
-            "sp/set_state",
-            10)
+        self.state_publisher = self.create_client(
+            Json,
+            "sp/set_state")
 
         self.get_logger().info("Sequence Planner UI, up and running")
 
     def trigger(self):
-        x = String()
-        x.data = json.dumps(Callbacks.cmd)
-        self.state_publisher.publish(x)
+        x = Json.Request()
+        x.json = json.dumps(Callbacks.cmd)
+        res = self.state_publisher.call(x)
+        print("HEJ HEJ: " + str(res))
 
     def sp_cmd_callback(self, data):
         # print("ui got data: " + str(data.data))
@@ -211,7 +212,7 @@ class Window(QtWidgets.QWidget, Callbacks):
                         value_item.setData(value, Qt.DisplayRole)
                         value_item.setData(value, Qt.ToolTipRole)
 
-            self.mode.setText(str(Callbacks.info["/mode"]))
+            #self.mode.setText(str(Callbacks.info["/mode"]))
 
             #self.count += 1
 
