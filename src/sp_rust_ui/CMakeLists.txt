@@ -11,6 +11,7 @@ include(r2r_cargo.cmake)
 
 # put ros package dependencies here.
 r2r_cargo(std_msgs               # just to test that it works
+          sp_msgs
           rcl                    # we need the c ros2 api
           rcl_action             # as of r2r 0.1.0, we also need the action api
           rmw_fastrtps_cpp       # (needed to build with RMW_IMPLEMENTATION=rmw_fastrtps_cpp)
