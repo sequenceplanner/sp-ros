@@ -1,5 +1,5 @@
 # sp-ros
-A ros2 workspace for Sequence Planner with SP messages and other nodes
+A ros2 workspace for Sequence Planner with SP utils
 
 ```console
 colcon build
