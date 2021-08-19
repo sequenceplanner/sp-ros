@@ -12,7 +12,7 @@ from PyQt5 import (QtWidgets, QtCore, QtGui)
 from PyQt5.QtCore import (Qt)
 
 from std_msgs.msg import String
-from sp_messages.srv import Json
+import sp_msgs.srv
 
 
 class Callbacks():
@@ -33,21 +33,23 @@ class Ros2Node(Node, Callbacks):
 
         self.subscriber = self.create_subscription(
             String,
-            "sp/state_flat",
+            "/sp/state_flat",
             self.sp_cmd_callback,
             10)
 
         self.state_publisher = self.create_client(
-            Json,
-            "sp/set_state")
+            sp_msgs.srv.Json,
+            "/sp/set_state")
 
         self.get_logger().info("Sequence Planner UI, up and running")
 
     def trigger(self):
-        x = Json.Request()
+        x = sp_msgs.srv.Json.Request()
         x.json = json.dumps(Callbacks.cmd)
-        res = self.state_publisher.call(x)
-        print("HEJ HEJ: " + str(res))
+        self.state_publisher = self.create_client(
+            sp_msgs.srv.Json,
+            "/sp/set_state")
+        res = self.state_publisher.call_async(x)
 
     def sp_cmd_callback(self, data):
         # print("ui got data: " + str(data.data))
