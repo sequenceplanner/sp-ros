@@ -292,7 +292,7 @@ class Window(QtWidgets.QWidget, Callbacks):
                     elif set_value:
                         try:
                             val = ast.literal_eval(set_value)
-                            set_it[path]= json.dumps(val)
+                            set_it[path]= val
                         except ValueError:
                             set_it[path]= set_value
 
