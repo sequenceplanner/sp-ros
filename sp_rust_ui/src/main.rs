@@ -94,22 +94,5 @@ async fn my_tree(
         Ok(())
 }
 
-async fn testing(pub_state: r2r::Publisher<r2r::std_msgs::msg::String>) {
-    let mut s = state!(["a", "b"] => 0, ["a", "c"] => true, ["k", "l"] => false);
-        let mut no = 0;
-        let mut sleep = tokio::time::interval(std::time::Duration::from_secs(1));
-        let a1 = a!("a/c" <- "k/l");
-        let a2 = a!("k/l" <- "a/c");
-        loop {
-            sleep.tick().await;
-            no += 1;
-            s.next_from_path(&SPPath::from_string("a/b"), no.to_spvalue()).unwrap();
-            a1.next(&mut s).unwrap();
-            a2.next(&mut s).unwrap();
-            s.take_transition();
-            let json = SPStateJson::from_state_flat(&s);
-            let json_string = serde_json::to_string(&json).unwrap();
-            let msg = r2r::std_msgs::msg::String{data: json_string};
-            pub_state.publish(&msg).unwrap();
-        }
-}
+
+
